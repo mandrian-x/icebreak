@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Player // ICEBREAK</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/favicon.png">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <header>
+    <a class="site-logo" href="index.html" aria-label="ICEBREAK home"><img src="assets/icebreak-logo.png" alt="ICEBREAK"></a>
+    <a id="logout" href="index.html">LOG OUT</a>
+  </header>
+
+  <main class="dashboard">
+    <div class="dash-head">
+      <p class="eyebrow">PLAYER</p>
+      <h1 id="welcome">WELCOME.</h1>
+    </div>
+
+    <div id="eventBanner" class="event-banner">
+      <span class="event-dot"></span>
+      <div>
+        <b id="eventBannerTitle">PRE-EVENT</b>
+        <p id="eventBannerText">
+          The event has not started yet. Your missions will appear when the admin starts the live event.
+        </p>
+      </div>
+    </div>
+
+    <div id="notice" class="notice hidden"></div>
+
+    <div class="player-grid">
+      <section class="panel">
+        <p class="eyebrow" id="type">WAITING</p>
+        <div id="missionNumber" class="mission-big-number">—</div>
+        <h2 id="mission">Waiting for the next mission.</h2>
+        <p id="desc">
+          The admin has not launched a mission yet.
+        </p>
+        <b class="xp" id="xpMission"></b>
+        <div id="missionTimer" class="mission-timer hidden">
+          <span id="missionTimerLabel">TIME REMAINING</span>
+          <strong id="missionTimerValue">00:00</strong>
+        </div>
+        <div id="progressMessage" class="progress-message"></div>
+      </section>
+
+      <section class="panel qr">
+        <p class="eyebrow" id="qrTitle">NO QR YET</p>
+        <div id="qr"></div>
+        <p id="qrHelp">
+          Your QR will appear when your next mission is available.
+        </p>
+        <div class="qr-fallback-code">
+          <span>SCAN CODE</span>
+          <code id="qrCodeValue"></code>
+        </div>
+      </section>
+    </div>
+
+    <div class="stats">
+      <div>XP <b id="xp">0</b></div>
+      <div>TEAM <b id="team">—</b></div>
+      <div>RANK <b id="rank">—</b></div>
+    </div>
+
+    <section class="panel team-panel hidden" id="teamPanel">
+      <p class="eyebrow">YOUR TEAM</p>
+
+      <div class="team-identity">
+        <div>
+          <span class="team-label">TEAM</span>
+          <h2 id="teamName">—</h2>
+        </div>
+
+        <div class="leader-box">
+          <span class="team-label">LEADER</span>
+          <b id="teamLeader">—</b>
+        </div>
+      </div>
+
+      <div class="team-members-section">
+        <span class="team-label">TEAM MEMBERS</span>
+        <div id="teamMembers" class="team-members"></div>
+      </div>
+
+      <div id="leaderRename" class="leader-rename hidden">
+        <label for="newTeamName">RENAME TEAM · ONCE PER EVENT</label>
+
+        <div class="rename-row">
+          <input
+            id="newTeamName"
+            type="text"
+            maxlength="32"
+            placeholder="Enter your team name"
+          >
+
+          <button class="small-btn" id="renameTeam" type="button">
+            SAVE NAME
+          </button>
+        </div>
+
+        <p class="muted" id="renameHelp">
+          As team leader, you can rename your team once. Choose carefully.
+        </p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="eyebrow">MISSION PROGRESS</p>
+      <div id="missionProgress"></div>
+    </section>
+
+    <section class="panel inbox-panel" id="playerInbox">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">ADMIN MESSAGES</p>
+          <h2>Inbox</h2>
+        </div>
+        <span id="inboxCount" class="inbox-count hidden">0 NEW</span>
+      </div>
+      <div id="inboxMessages"><div class="empty-state">No messages yet.</div></div>
+    </section>
+
+    <h3>LEADERBOARD</h3>
+    <div id="board"></div>
+  </main>
+
+  <script type="module" src="player.js?v=61"></script>
+
+<footer class="footer">
+  <p class="signature">Created by <span class="signature-name">Devanarayanan S R</span></p>
+</footer>
+
+</body>
+</html>

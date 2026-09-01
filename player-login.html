@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ICEBREAK</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/favicon.png">
+</head>
+<body>
+  <main class="auth-page">
+    <a class="back" href="index.html" aria-label="Back to ICEBREAK"><img src="assets/icebreak-logo.png" alt="ICEBREAK"></a>
+
+    <div class="auth-card">
+      <p class="eyebrow" id="ey"></p>
+      <h1 id="title">Welcome back.</h1>
+      <p id="desc"></p>
+
+      <div class="tabs">
+        <button class="active" id="loginTab">LOGIN</button>
+        <button id="registerTab">REGISTER</button>
+      </div>
+
+      <form id="form">
+        <label id="idLabel">EMAIL</label>
+        <input id="id" required autocomplete="username">
+
+        <label id="nameLabel" class="hidden">FULL NAME</label>
+        <input id="name" class="hidden" autocomplete="name">
+
+        <label id="emailLabel" class="hidden">EMAIL</label>
+        <input id="email" class="hidden" type="email" autocomplete="email">
+
+        <label id="membershipLabel" class="hidden">MEMBERSHIP ID</label>
+        <input id="membership" class="hidden" autocomplete="off">
+
+        <label>PIN / PASSWORD</label>
+        <input
+          id="pin"
+          required
+          type="password"
+          autocomplete="current-password"
+        >
+
+        <label id="confirmLabel" class="hidden">CONFIRM PASSWORD</label>
+        <input
+          id="confirm"
+          class="hidden"
+          type="password"
+          autocomplete="new-password"
+        >
+
+        <button class="primary full" id="submit">LOGIN →</button>
+      </form>
+
+      <button type="button" class="link-btn" id="forgot">
+        Forgot password?
+      </button>
+
+      <p class="muted" id="hint"></p>
+    </div>
+  </main>
+
+  <script type="module" src="auth.js?v=61"></script>
+
+<footer class="footer">
+  <p class="signature">Created by <span class="signature-name">Devanarayanan S R</span></p>
+</footer>
+
+</body>
+</html>

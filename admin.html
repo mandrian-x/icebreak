@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin // ICEBREAK</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/favicon.png">
+</head>
+<body>
+  <header>
+    <a class="site-logo" href="index.html" aria-label="ICEBREAK home"><img src="assets/icebreak-logo.png" alt="ICEBREAK"></a>
+    <nav class="admin-nav" aria-label="Admin navigation">
+      <a href="#missions">MISSIONS</a>
+      <a href="#players">PLAYERS</a>
+      <a href="#volunteers">VOLUNTEERS</a>
+      <a href="#messages">MESSAGES</a>
+      <a id="logout" href="index.html">LOG OUT</a>
+    </nav>
+  </header>
+
+  <main class="dashboard">
+    <div class="dash-head">
+      <p class="eyebrow">CONTROL ROOM</p>
+      <h1>Run the<br><em>room.</em></h1>
+    </div>
+
+    <section class="panel event-control">
+      <div class="event-control-head">
+        <div>
+          <p class="eyebrow">EVENT STATE</p>
+          <h2 id="eventStateTitle">PRE-EVENT</h2>
+          <p class="muted" id="eventStateHelp">
+            Players can register and admins can prepare the event.
+            Missions are not playable yet.
+          </p>
+        </div>
+
+        <button class="event-toggle" id="eventToggle" type="button">
+          START LIVE EVENT →
+        </button>
+      </div>
+    </section>
+
+    <div class="stats">
+      <div>ACTIVE MEMBERS <b id="count">0</b></div>
+      <div>ACTIVE TASKS <b id="activeTasks">0</b></div>
+      <div>TEAMS <b id="teams">0</b></div>
+      <div>TOTAL XP <b id="total">0</b></div>
+    </div>
+
+    <section class="panel live-data">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">LIVE DATA</p>
+          <h2>Current event activity</h2>
+        </div>
+        <p class="muted" id="liveDataStatus">Connecting to Firebase…</p>
+      </div>
+      <div class="live-data-grid">
+        <div>
+          <span class="eyebrow">MEMBERS ONLINE / REGISTERED</span>
+          <strong id="liveMemberCount">0</strong>
+        </div>
+        <div>
+          <span class="eyebrow">TASKS ACTIVE</span>
+          <strong id="liveTaskCount">0</strong>
+        </div>
+        <div>
+          <span class="eyebrow">MISSIONS CREATED</span>
+          <strong id="missionCount">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="admin-grid">
+      <section class="panel">
+        <p class="eyebrow">CREATE MISSION</p>
+
+        <label for="mtitle">TITLE</label>
+        <input id="mtitle" autocomplete="off">
+
+        <label for="mdesc">DESCRIPTION</label>
+        <textarea id="mdesc"></textarea>
+
+        <label for="mtype">MISSION TYPE</label>
+        <select id="mtype">
+          <option value="individual">INDIVIDUAL — PLAYER QR</option>
+          <option value="team">TEAM — TEAM QR</option>
+        </select>
+
+        <label for="mxp">XP AWARD</label>
+        <input id="mxp" type="number" value="25" min="1">
+
+        <label class="check">
+          <input type="checkbox" id="mtime">
+          TIME-SENSITIVE MISSION — SHOW PLAYER TIMER
+        </label>
+
+        <div id="timeLimitWrap" class="hidden">
+          <label for="mtimeLimit">TIME LIMIT (MINUTES)</label>
+          <input id="mtimeLimit" type="number" min="1" max="1440" value="10">
+          <p class="muted">
+            The player's countdown begins when they first open this mission.
+          </p>
+        </div>
+
+        <button class="primary full" id="createMission">
+          CREATE MISSION →
+        </button>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">TEAMS</p>
+        <p class="muted">
+          Players are randomly assigned into balanced teams.
+          A random leader is selected for each team. The leader can name the team once.
+        </p>
+
+        <label for="teamSize">TEAM SIZE</label>
+        <input id="teamSize" type="number" min="2" value="6">
+
+        <button class="primary full" id="assign">
+          ASSIGN / REASSIGN TEAMS
+        </button>
+
+        <div id="teamList"></div>
+      </section>
+    </div>
+    <section class="panel settings">
+      <p class="eyebrow">PLAYER REGISTRATION SETTINGS</p>
+
+      <label class="check">
+        <input type="checkbox" id="reqReg">
+        REQUIRE PLAYER REGISTRATION ID
+      </label>
+
+      <label for="regPattern">PLAYER REGISTRATION ID STRUCTURE</label>
+      <input id="regPattern" placeholder="MEMBER2026###">
+
+      <p class="eyebrow" style="margin-top:22px">VOLUNTEER REGISTRATION SETTINGS</p>
+
+      <label for="membershipPattern">VOLUNTEER MEMBERSHIP ID STRUCTURE</label>
+      <input id="membershipPattern" placeholder="MEMBER2026###" autocomplete="off">
+
+      <p class="muted">
+        Membership ID is mandatory for every volunteer. Set any format you want
+        using the format guide below.
+      </p>
+
+      <div class="format-guide">
+        <b>Format guide</b>
+        <div># = digit (0–9)</div>
+        <div>^ = uppercase letter (A–Z)</div>
+        <div>$ = lowercase letter (a–z)</div>
+        <div>* = any character</div>
+      </div>
+
+      <button class="primary full" id="saveSettings">
+        SAVE REGISTRATION SETTINGS
+      </button>
+    </section>
+
+    <section class="panel settings">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">XP CONTROL</p>
+          <h2>Grant mission XP</h2>
+        </div>
+        <p class="muted" id="bulkAwardHelp">
+          These controls apply to the currently active mission. Every grant ends that mission.
+        </p>
+      </div>
+
+      <button class="primary full" id="grantAll">
+        GRANT XP TO ALL
+      </button>
+
+      <label for="grantExceptPlayer">GRANT XP TO ALL EXCEPT PLAYER</label>
+      <select id="grantExceptPlayer">
+        <option value="">SELECT PLAYER</option>
+      </select>
+      <button class="primary full" id="grantAllExceptPlayer">
+        GRANT XP TO ALL EXCEPT PLAYER
+      </button>
+
+      <label for="grantExceptTeam">GRANT XP TO ALL TEAMS EXCEPT</label>
+      <select id="grantExceptTeam">
+        <option value="">SELECT TEAM</option>
+      </select>
+      <button class="primary full" id="grantAllExceptTeam">
+        GRANT XP TO ALL TEAMS EXCEPT TEAM
+      </button>
+    </section>
+
+    <section class="panel messaging-panel" id="messages">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">EVENT BROADCAST</p>
+          <h2>Send a message</h2>
+        </div>
+        <p class="muted">Messages are delivered live to the selected ICEBREAK inboxes.</p>
+      </div>
+
+      <label for="messageAudience">SEND TO</label>
+      <select id="messageAudience">
+        <option value="all_players">ALL PLAYERS</option>
+        <option value="all_volunteers">ALL VOLUNTEERS</option>
+        <option value="one_volunteer">ANY VOLUNTEER</option>
+        <option value="one_player">ANY PLAYER</option>
+        <option value="other_admin">OTHER ADMIN</option>
+        <option value="everyone">EVERYONE</option>
+      </select>
+
+      <div id="messageRecipientWrap" class="hidden">
+        <label for="messageRecipient">RECIPIENT</label>
+        <select id="messageRecipient"></select>
+      </div>
+
+      <label for="messageTitle">TITLE</label>
+      <input id="messageTitle" maxlength="100" placeholder="e.g. NEXT MISSION STARTS NOW" autocomplete="off">
+
+      <label for="messageBody">MESSAGE</label>
+      <textarea id="messageBody" maxlength="2000" placeholder="Write your announcement or instruction here..."></textarea>
+
+      <button class="primary full" id="sendMessage" type="button">SEND MESSAGE →</button>
+      <p class="muted" id="messageStatus"></p>
+    </section>
+
+    <section class="panel inbox-panel" id="adminInbox">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">ADMIN INBOX</p>
+          <h2>Messages for you</h2>
+        </div>
+      </div>
+      <div id="inboxMessages"><div class="empty-state">No messages yet.</div></div>
+    </section>
+
+    <section class="panel" id="missions">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">MISSION CONTROL</p>
+          <h2>Live mission queue</h2>
+        </div>
+        <p class="muted mission-help">
+          Individual missions can run together and are shown in order.
+          Team missions end the current individual phase without awarding XP
+          for unfinished attempts. Missions only become playable during LIVE.
+        </p>
+      </div>
+      <div id="missionsList"></div>
+    </section>
+
+    <section class="panel danger settings">
+      <p class="eyebrow">DANGER ZONE</p>
+      <h2>Delete all event users</h2>
+      <p class="muted">
+        This removes event profiles, teams, missions and completion records.
+        Firebase Authentication accounts require a trusted Admin SDK backend
+        for complete account deletion.
+      </p>
+      <button class="danger-btn" id="deleteAll">
+        DELETE ALL USERS
+      </button>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">TOP POSITIONS</p>
+          <h2>Leaderboard leaders</h2>
+        </div>
+        <p class="muted">
+          The top positions show the player's name, email and registration ID
+          when registration IDs are being collected.
+        </p>
+      </div>
+      <div id="topPositions"></div>
+    </section>
+
+    <section class="panel" id="players">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">PLAYERS</p>
+          <h2>All players</h2>
+        </div>
+        <p class="muted">Every registered player, team, leader status and current XP.</p>
+      </div>
+      <div id="playersList"></div>
+    </section>
+
+    <section class="panel" id="volunteers">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">VOLUNTEERS</p>
+          <h2>Volunteer list</h2>
+        </div>
+        <p class="muted">Remove a volunteer only after re-authentication and explicit DELETE confirmation.</p>
+      </div>
+      <div id="volunteersList"></div>
+    </section>
+  </main>
+
+  <script type="module" src="admin.js?v=61"></script>
+
+<footer class="footer">
+  <p class="signature">Created by <span class="signature-name">Devanarayanan S R</span></p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Volunteer // ICEBREAK</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/favicon.png">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+  <header>
+    <a class="site-logo" href="index.html" aria-label="ICEBREAK home"><img src="assets/icebreak-logo.png" alt="ICEBREAK"></a>
+    <a id="logout" href="index.html">LOG OUT</a>
+  </header>
+
+  <main class="dashboard">
+    <div class="dash-head">
+      <p class="eyebrow">VERIFICATION CONSOLE</p>
+      <h1>Verify.<br><em>Reward.</em></h1>
+    </div>
+
+    <div id="eventBanner" class="event-banner">
+      <span class="event-dot"></span>
+      <div>
+        <b id="eventBannerTitle">PRE-EVENT</b>
+        <p id="eventBannerText">
+          The event has not started yet. The scanner will activate when the admin starts the live event.
+        </p>
+      </div>
+    </div>
+
+    <section class="panel scanner">
+      <p class="eyebrow">SCAN PLAYER OR TEAM QR</p>
+      <p class="muted">
+        The QR identifies the exact mission and target. A volunteer cannot
+        award XP for a different mission.
+      </p>
+
+      <button class="primary big" id="scan">
+        OPEN CAMERA SCANNER
+      </button>
+
+      <div id="scannerStatus" class="scanner-status">
+        Camera scanner is ready.
+      </div>
+
+      <div id="reader"></div>
+
+      <div class="scan-fallback">
+        <label for="qrImage">Or test with a QR image</label>
+        <input id="qrImage" type="file" accept="image/*">
+      </div>
+
+      <div class="code-entry">
+        <label for="missionCode">ENTER MISSION CODE</label>
+        <div class="code-entry-row">
+          <input
+            id="missionCode"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            maxlength="10"
+            placeholder="e.g. K7Q4M8ZT2P"
+            spellcheck="false"
+          >
+          <button id="submitMissionCode" class="primary">VERIFY CODE</button>
+        </div>
+        <small>Use the code shown directly below the player's QR.</small>
+      </div>
+
+      <div id="result" class="result hidden"></div>
+
+      <button id="verify" class="primary full hidden">
+        ✓ MARK SUCCESSFUL & AWARD XP
+      </button>
+    </section>
+
+    <section class="panel inbox-panel" id="volunteerInbox">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">ADMIN MESSAGES</p>
+          <h2>Inbox</h2>
+        </div>
+        <span id="inboxCount" class="inbox-count hidden">0 NEW</span>
+      </div>
+      <div id="inboxMessages"><div class="empty-state">No messages yet.</div></div>
+    </section>
+
+    <section class="panel leaderboard-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">LIVE LEADERBOARD</p>
+          <h2>Current standings</h2>
+        </div>
+        <p class="muted">Scores update automatically as volunteers verify missions.</p>
+      </div>
+      <div id="board"></div>
+    </section>
+  </main>
+
+  <script type="module" src="volunteer.js?v=61"></script>
+
+<footer class="footer">
+  <p class="signature">Created by <span class="signature-name">Devanarayanan S R</span></p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,312 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.email in [
+        'srdevanarayanan8@gmail.com',
+        'iedc@jcmcsiit.ac.in'
+      ];
+    }
+
+    function userExists(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function myRole() {
+      return userExists(request.auth.uid)
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function isPlayer() {
+      return signedIn() && myRole() == 'player';
+    }
+
+    function isVolunteer() {
+      return signedIn() && myRole() == 'volunteer';
+    }
+
+    function isStaff() {
+      return isAdmin() || isVolunteer();
+    }
+
+    function missionDoc(missionId) {
+      return get(/databases/$(database)/documents/missions/$(missionId));
+    }
+
+    function missionExists(missionId) {
+      return exists(/databases/$(database)/documents/missions/$(missionId));
+    }
+
+    function missionActive(missionId) {
+      return missionExists(missionId)
+        && missionDoc(missionId).data.status == 'active';
+    }
+
+    function missionTargetType(missionId) {
+      return missionDoc(missionId).data.type == 'individual' ? 'player' : 'team';
+    }
+
+    function canonicalCompletionId() {
+      return request.resource.data.missionId + '_'
+        + request.resource.data.targetType + '_'
+        + request.resource.data.targetId;
+    }
+
+    function validPlayerTarget() {
+      return request.resource.data.targetType == 'player'
+        && userExists(request.resource.data.targetId)
+        && get(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.role == 'player'
+        && request.resource.data.awardedPlayerIds == [request.resource.data.targetId];
+    }
+
+    function validTeamTarget() {
+      return request.resource.data.targetType == 'team'
+        && exists(/databases/$(database)/documents/teams/$(request.resource.data.targetId))
+        && request.resource.data.awardedPlayerIds
+          == get(/databases/$(database)/documents/teams/$(request.resource.data.targetId)).data.memberIds;
+    }
+
+    function validCompletionShape(completionId) {
+      return request.resource.data.missionId is string
+        && request.resource.data.targetType in ['player', 'team']
+        && request.resource.data.targetId is string
+        && request.resource.data.xpAwarded is number
+        && request.resource.data.awardedPlayerIds is list
+        && completionId == canonicalCompletionId()
+        && missionActive(request.resource.data.missionId)
+        && request.resource.data.targetType == missionTargetType(request.resource.data.missionId)
+        && request.resource.data.xpAwarded == missionDoc(request.resource.data.missionId).data.xp
+        && (validPlayerTarget() || validTeamTarget());
+    }
+
+    function timerValid() {
+      return missionDoc(request.resource.data.missionId).data.timeSensitive != true
+        || missionDoc(request.resource.data.missionId).data.timeLimitMinutes <= 0
+        || (
+          request.resource.data.targetType == 'player'
+          && exists(/databases/$(database)/documents/missionStarts/$(request.resource.data.missionId + '_player_' + request.resource.data.targetId))
+          && request.time <= get(/databases/$(database)/documents/missionStarts/$(request.resource.data.missionId + '_player_' + request.resource.data.targetId)).data.startedAt
+            + duration.value(missionDoc(request.resource.data.missionId).data.timeLimitMinutes, 'm')
+        )
+        || (
+          request.resource.data.targetType == 'team'
+          && exists(/databases/$(database)/documents/missionStarts/$(request.resource.data.missionId + '_team_' + request.resource.data.targetId))
+          && request.time <= get(/databases/$(database)/documents/missionStarts/$(request.resource.data.missionId + '_team_' + request.resource.data.targetId)).data.startedAt
+            + duration.value(missionDoc(request.resource.data.missionId).data.timeLimitMinutes, 'm')
+        );
+    }
+
+    // ─────────────────────────────────────────────
+    // USERS
+    // Registration is intentionally simple and deterministic:
+    // an authenticated user may create exactly their own first profile.
+    // No auth-token email comparison is used, avoiding token propagation races.
+    // ─────────────────────────────────────────────
+    match /users/{uid} {
+      allow get, list: if signedIn();
+
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.role in ['player', 'volunteer']
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.email is string
+        && request.resource.data.registrationId is string
+        && request.resource.data.membershipId is string
+        && request.resource.data.teamId == ''
+        && request.resource.data.isLeader == false
+        && request.resource.data.xp == 0;
+
+      // Admin profile bootstrap.
+      allow create: if isAdmin()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.role == 'admin';
+
+      allow update, delete: if isAdmin();
+
+      // Players may edit only their own display details.
+      allow update: if isPlayer()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email']);
+    }
+
+    // ─────────────────────────────────────────────
+    // EVENT SETTINGS
+    // The event settings document is readable before login so registration can
+    // validate configured ID formats. All writes remain admin-only.
+    // ─────────────────────────────────────────────
+    match /settings/{settingId} {
+      allow get: if settingId == 'event';
+      allow list: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // MISSIONS / TEAMS
+    // ─────────────────────────────────────────────
+    match /missions/{missionId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /teams/{teamId} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (
+          isPlayer()
+          && resource.data.leaderId == request.auth.uid
+          && request.resource.data.leaderId == resource.data.leaderId
+          && request.resource.data.memberIds == resource.data.memberIds
+          && resource.data.nameChanged != true
+          && request.resource.data.nameChanged == true
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'nameChanged'])
+        );
+    }
+
+    // ─────────────────────────────────────────────
+    // QR CODES
+    // Players can publish only a QR for themselves or their own team. Existing
+    // mappings are immutable for players, which makes repeated rendering safe.
+    // ─────────────────────────────────────────────
+    match /qrCodes/{code} {
+      allow get: if signedIn();
+      allow list: if isStaff();
+
+      allow create: if isPlayer()
+        && request.resource.data.code == code
+        && request.resource.data.missionId is string
+        && request.resource.data.targetType in ['player', 'team']
+        && request.resource.data.targetId is string
+        && request.resource.data.createdBy == request.auth.uid
+        && missionActive(request.resource.data.missionId)
+        && request.resource.data.targetType == missionTargetType(request.resource.data.missionId)
+        && (
+          (request.resource.data.targetType == 'player' && request.resource.data.targetId == request.auth.uid)
+          ||
+          (request.resource.data.targetType == 'team'
+            && request.resource.data.targetId != ''
+            && request.resource.data.targetId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId)
+        );
+
+      allow update: if isAdmin()
+        || (
+          isPlayer()
+          && resource.data.code == request.resource.data.code
+          && resource.data.missionId == request.resource.data.missionId
+          && resource.data.targetType == request.resource.data.targetType
+          && resource.data.targetId == request.resource.data.targetId
+          && resource.data.createdBy == request.resource.data.createdBy
+          && request.resource.data.createdBy == request.auth.uid
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // MISSION STARTS / PLAYER TIMER
+    // ─────────────────────────────────────────────
+    match /missionStarts/{startId} {
+      allow read: if signedIn();
+
+      allow create: if isPlayer()
+        && request.resource.data.missionId is string
+        && request.resource.data.startedAt is timestamp
+        && missionActive(request.resource.data.missionId)
+        && (
+          (
+            request.resource.data.targetType == 'player'
+            && request.resource.data.targetId == request.auth.uid
+            && request.resource.data.playerId == request.auth.uid
+            && startId == request.resource.data.missionId + '_player_' + request.auth.uid
+          )
+          ||
+          (
+            request.resource.data.targetType == 'team'
+            && request.resource.data.playerId == request.auth.uid
+            && request.resource.data.targetId != ''
+            && request.resource.data.targetId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId
+            && startId == request.resource.data.missionId + '_team_' + request.resource.data.targetId
+          )
+        );
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // COMPLETIONS / XP
+    // ─────────────────────────────────────────────
+    match /completions/{completionId} {
+      allow read: if signedIn();
+
+      // Volunteers verify exactly the active mission represented by the QR.
+      allow create: if isVolunteer()
+        && request.resource.data.verifiedBy == request.auth.uid
+        && validCompletionShape(completionId)
+        && timerValid();
+
+      // Admin bulk grant intentionally bypasses timer/QR scanning, but still
+      // uses the canonical mission, target and XP values.
+      allow create: if isAdmin()
+        && request.resource.data.bulkGrant == true
+        && request.resource.data.verifiedBy == request.auth.uid
+        && request.resource.data.awardedBy == request.auth.uid
+        && validCompletionShape(completionId);
+
+      allow update, delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // PUBLIC LEADERBOARD
+    // ─────────────────────────────────────────────
+    match /leaderboard/{uid} {
+      allow read: if true;
+      allow create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // PRIVATE INBOXES
+    // ─────────────────────────────────────────────
+    match /inboxes/{uid}/messages/{messageId} {
+      allow get, list: if signedIn() && request.auth.uid == uid;
+
+      allow create: if isAdmin()
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.recipientId == uid
+        && request.resource.data.messageId == messageId
+        && request.resource.data.audience in [
+          'all_players', 'all_volunteers', 'one_volunteer',
+          'one_player', 'other_admin', 'everyone'
+        ]
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 2000
+        && request.resource.data.read == false;
+
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt'])
+        && request.resource.data.read == true;
+
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
