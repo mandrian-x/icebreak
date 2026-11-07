@@ -34,7 +34,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyCbduefUkhNgDIzLxsCG4MVR6hXGt4WwLo',
+  apiKey: 'Firebase_key',
   authDomain: 'iedc-icebreak.firebaseapp.com',
   projectId: 'iedc-icebreak',
   storageBucket: 'iedc-icebreak.firebasestorage.app',
